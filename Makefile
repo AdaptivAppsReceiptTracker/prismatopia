@@ -177,14 +177,14 @@ apollo-token: env-APOLLO_TOKEN_ENDPOINT env-APOLLO_CLIENT_ID env-APOLLO_CLIENT_S
 	 printf "%s\n"   "======================================================================================"		&& 			\
 	 printf "$(NO_COLOR)"																																												&& 			\
 	 curl -s 																																																 					  \
-		    --url $${APOLLO_TOKEN_ENDPOINT}																																 								\
+		    --url $${APOLLO_TOKEN_ENDPOINT}																																 							\
 				--header 'accept: application/json'																																			 			\
 		    --header 'content-type: application/x-www-form-urlencoded' 																							 			\
-		    --data grant_type=password																																										\
-				--data scope=openid																																														\
-				--data-urlencode username=$${APOLLO_TEST_USERNAME}																														\
-				--data-urlencode password=$${APOLLO_TEST_PASSWORD}																														\
-				-u $${APOLLO_CLIENT_ID}:$${APOLLO_CLIENT_SECRET}
+		    --data grant_type=client_credentials																																					\
+				--data-urlencode audience=$${OAUTH_AUDIENCE}$																																	\
+				--data-urlencode client_id=$${APOLLO_CLIENT_ID}																																\
+				--data-urlencode client_secret=$${APOLLO_CLIENT_SECRET}																												\
+
 
 
 # =================================================================

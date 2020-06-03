@@ -1,54 +1,63 @@
 // @ts-check
-'use strict'
 
 // Apollo dependencies
-const { importSchema } = require('graphql-import')
-const { ApolloServer, gql } = require('apollo-server')
+const { importSchema } = require("graphql-import");
+const { ApolloServer, gql } = require("apollo-server");
 
-const PORT = process.env.PORT || 8000
+// Import resolvers and context
+const resolvers = require("./resolvers");
+const { context, onConnect } = require("./context");
+
+// Declare port
+const PORT = process.env.PORT || 8000;
 
 const checkEnvironment = () => {
-  const requiredEnvironmentVariables = ['JWT_ISSUER', 'JWKS_URI', 'PRISMA_ENDPOINT', 'PRISMA_SECRET']
+  const requiredEnvironmentVariables = [
+    "JWT_ISSUER",
+    "JWKS_URI",
+    "PRISMA_ENDPOINT",
+    "PRISMA_SECRET",
+  ];
 
-  let environmentReady = true
+  let environmentReady = true;
   for (const variableName of requiredEnvironmentVariables) {
     if (!(variableName in process.env)) {
-      console.error('Server cannot be started without environment variable %s', variableName)
-      environmentReady = false
+      console.error(
+        "Server cannot be started without environment variable %s",
+        variableName
+      );
+      environmentReady = false;
     }
   }
 
   if (!environmentReady) {
-    throw new Error('Missing one or more required environment variables')
+    throw new Error("Missing one or more required environment variables");
   }
-}
+};
 
-const resolvers = require('./resolvers')
-const context = require('./context')
-
-const typeDefs = gql(importSchema('schema/apollo.graphql'));
-
-(async () => {
-  // Check the environment
-  checkEnvironment()
+async function main() {
+  const typeDefs = await importSchema("schema/apollo.graphql");
 
   const server = new ApolloServer({
     resolvers,
-    typeDefs,
+    subscriptions: {
+      onConnect: onConnect,
+    },
+    typeDefs: gql(typeDefs),
     context,
-    cors: true,
-    formatError: err => {
-      // Don't give the specific errors to the client.
-      console.log('%O', err)
-      console.log('%O', err.extensions)
+    cors: {
+      origin: "*", // <- allow request from all domains
+      credentials: true,
+    },
+    dataSources: () => ({}),
+  });
 
-      // Otherwise return the original error.  The error can also
-      // be manipulated in other ways, so long as it's returned.
-      return err
-    }
-  })
+  server.listen({ port: PORT }).then(({ url }) => {
+    console.log(`🚀 Server ready at ${url}`);
+  });
+}
 
-  const { url } = await server.listen(PORT)
-  // eslint-disable-next-line no-console
-  console.log(`=========Running on ${url}=========`)
-})()
+// Check the environment
+checkEnvironment();
+
+main();
